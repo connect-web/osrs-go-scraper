@@ -1,7 +1,9 @@
+
+
 -- The players table storing player_id's, Name's and first appearances to the database
 CREATE TABLE IF NOT EXISTS players(
     ID SERIAL PRIMARY KEY,
-    NAME VARCHAR(12) UNIQUE NOT NULL,
+    NAME CITEXT UNIQUE NOT NULL,
     FIRST_SEEN timestamptz NOT NULL DEFAULT NOW()
 );
 
