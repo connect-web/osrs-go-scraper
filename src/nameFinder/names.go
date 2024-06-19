@@ -14,7 +14,7 @@ import (
 
 var (
 	start                     = time.Now().Unix()
-	threads                   = 100
+	threads                   = 20
 	maxNbConcurrentGoroutines = flag.Int("MaxRoutines", threads, "The number of goroutines that are allowed to run concurrently")
 	proxyIterator             = utils.NewProxyIterator("proxies.txt")
 	usernames_verified        = 0
