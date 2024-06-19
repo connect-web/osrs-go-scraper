@@ -1,4 +1,4 @@
-module leaderboard.go
+module leaderboardDb.go
 
 go 1.22.0
 
