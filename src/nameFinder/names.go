@@ -1,21 +1,22 @@
 package main
 
 import (
-	database "database/leaderboard.go"
 	"flag"
 	"fmt"
+	database "github.com/connect-web/Low-Latency-DB"
+	utils "github.com/connect-web/Low-Latency-Utils"
 	"names.go/entities"
-	"names.go/entities/limits"
-	"names.go/requests"
+	limits "names.go/entities/limits"
+
 	"sync"
 	"time"
 )
 
 var (
 	start                     = time.Now().Unix()
-	threads                   = 50
+	threads                   = 100
 	maxNbConcurrentGoroutines = flag.Int("MaxRoutines", threads, "The number of goroutines that are allowed to run concurrently")
-	proxyIterator             = entities.NewProxyIterator("proxies.txt")
+	proxyIterator             = utils.NewProxyIterator("proxies.txt")
 	usernames_verified        = 0
 )
 
@@ -28,7 +29,7 @@ func main() {
 }
 
 func run() {
-	limitManager := FindLimits()
+	limitManager := limits.NewPageLimitManager() //FindLimits()
 
 	concurrentGoroutines := make(chan struct{}, *maxNbConcurrentGoroutines)
 	respChan := make(chan accInfo)
@@ -40,13 +41,13 @@ func run() {
 
 		for page := 0; page < hiscore_table_info.Limit; page++ {
 			wg.Add(1)
-			go func(hiscoreType limits.HiscoreType, page int, c chan accInfo, iterator *entities.ProxyIterator) {
+			go func(hiscoreType limits.HiscoreType, page int, c chan accInfo, iterator *utils.ProxyIterator) {
 				/*
 					Could add larger batch size to the goroutine however they are lightweight enough for current performance target
 				*/
 				defer wg.Done()
 				concurrentGoroutines <- struct{}{}
-				unique_names, _ := requests.GetNames(hiscoreType, page, iterator)
+				unique_names, _ := entities.GetNames(hiscoreType, page, iterator)
 				c <- accInfo{unique_names: unique_names}
 				<-concurrentGoroutines
 			}(hiscore_table_info, page, respChan, proxyIterator)
@@ -61,14 +62,7 @@ func run() {
 					continue
 				}
 				new_names[username] = struct{}{}
-
-				if len(new_names)%1000 == 0 {
-					secondsRan := time.Now().Unix() - start
-					playersPerSecond := float64(len(new_names)) / float64(secondsRan)
-					playersPerHour := (playersPerSecond * 3600) / 1000 // K players per hour.
-					fmt.Printf("%.2fK unique Names @ %.2fK/hr\n", float64(len(new_names))/1000, playersPerHour)
-				}
-				if len(new_names)%100_000 == 0 {
+				if len(new_names)%50_000 == 0 {
 					// the Larger the batch size for usernames
 					// = Less usernames due to removed duplicates
 					err := database.SubmitUsernames(new_names)
@@ -77,6 +71,11 @@ func run() {
 					} else {
 						usernames_verified += len(new_names)
 						fmt.Printf("%.2fK Usernames verified in database!\n", float64(usernames_verified/1000))
+
+						secondsRan := time.Now().Unix() - start
+						playersPerSecond := float64(len(new_names)) / float64(secondsRan)
+						playersPerHour := (playersPerSecond * 3600) / 1000 // K players per hour.
+						fmt.Printf("%.2fK unique Names @ %.2fK/hr\n", float64(usernames_verified)/1000, playersPerHour)
 
 						// Reset to prevent duplicate entries.
 						new_names = map[string]struct{}{}
@@ -90,7 +89,10 @@ func run() {
 	wg.Wait()
 	// final insert if data to insert.
 	if len(new_names) > 0 {
-		insertNewPlayers(new_names)
+		err := database.SubmitUsernames(new_names)
+		for err != nil {
+			err = database.SubmitUsernames(new_names)
+		}
 		new_names = map[string]struct{}{}
 	}
 }

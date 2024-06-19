@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	utils "github.com/connect-web/Low-Latency-Utils"
 	"names.go/entities"
 	"names.go/entities/limits"
-	"names.go/requests"
 	"sync"
 	"time"
 )
@@ -12,10 +12,8 @@ import (
 /*
 The old school runescape hiscores has a limit of the top 2 million users per hiscore ranking
 
-Some hiscore rankings do not have 2 million users participating in the activity, therefore this finds the page ranges that the Leaderboard scraper will visit
+Some hiscore rankings do not have 2 million users participating in the activity, therefore this finds the page ranges that the Leaderboard nameFinder will visit
 - This prevents wasted requests on pages that do not exist.
-
-TODO - Any ranking that reaches 2 million should be saved for future runs
 
 */
 
@@ -29,12 +27,12 @@ func FindLimits() *limits.PageLimits {
 	for _, hiscoreSkills := range limits.HiscoreMinigames {
 		wg.Add(1)
 
-		go func(hiscoreType limits.HiscoreType, page_limit int, c chan limits.PageLimitInfo, iterator *entities.ProxyIterator) {
+		go func(hiscoreType limits.HiscoreType, page_limit int, c chan limits.PageLimitInfo, iterator *utils.ProxyIterator) {
 			defer wg.Done()
 			concurrentGoroutines <- struct{}{}
 			start_page := 10
 
-			first_page, _ := requests.GetNames(hiscoreType, 1, iterator)
+			first_page, _ := entities.GetNames(hiscoreType, 1, iterator)
 			if len(first_page) == 0 {
 				fmt.Printf("First page failed. %s\n", hiscoreType.Minigames)
 			} else {
@@ -72,13 +70,13 @@ func FindLimits() *limits.PageLimits {
 	return pageLimitManager
 }
 
-func getValidPage(first_results map[string]bool, startPage int, delimPage int, hiscoreType limits.HiscoreType, iterator *entities.ProxyIterator, finalDelimiter int) int {
+func getValidPage(first_results map[string]bool, startPage int, delimPage int, hiscoreType limits.HiscoreType, iterator *utils.ProxyIterator, finalDelimiter int) int {
 	page := 1
 	last_page := 0
 
 	state := "continue"
 	for page = startPage; page < 80_000; page += delimPage {
-		results, _ := requests.GetNames(hiscoreType, page, iterator)
+		results, _ := entities.GetNames(hiscoreType, page, iterator)
 		if mapEqual(first_results, results) {
 			state = "finished"
 			// print when finished all delimiters
