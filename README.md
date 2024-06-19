@@ -1,17 +1,16 @@
 # Low Latency
 
-# About
+## What's the main focus of Low Latency?
+- Live OSRS Hiscores data for datasets in Machine Learning.
 
 ## What is low latency?
-Low Latency is a Go project that scrapes the Runescape Hiscores at high speeds to ensure a live reflection of the players stats in Old School Runescape.
+- Go project that scrapes the Runescape Hiscores at high speeds.
 
 ## Why do we need it?
-There are multiple bot farms achieving high stats in individual skills, this project is a database for easy access to the Runescape player skills.
+- There are multiple bot farms achieving hundreds of millions of experience in one skill.
+- Low latency is the backend for an API to easily find these accounts and ban the bots earlier.
 
-These skills are useful for Machine Learning datasets and give data scientists access to a low latency live database.
 
-## What's the main focus of Low Latency?
-- Performance
 
 ## What's the inspiration behind Low Latency?
 
@@ -48,10 +47,11 @@ Then set your environmental variables for the Go scraper to connect with your do
 edit ```~/.bashrc``` and set these to the top of your file.
 
 ```shell
-export rsHost="localhost" # or external host ip
-export rsPort="5432" # 5432 by default
-export dbname="database" # database by default
-export rsPassword="mypassword" # mypassword by default
+export lowLatencyUser="postgres"
+export lowlatencyPassword="mypassword" # plz change this
+export lowLatencyHost="localhost"
+export lowLatencyPort="5432"
+export lowLatencyDatabase="database"
 ```
 
 # Running
