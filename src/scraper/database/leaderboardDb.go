@@ -1,18 +1,20 @@
-package main
+package database
 
 import (
 	"fmt"
+	"leaderboardDb.go/base"
+	"leaderboardDb.go/nameFilter"
 	"log"
 	"strings"
 )
 
 // UserClient extends DBClient with specific methods for handling users.
 type LeaderboardClient struct {
-	*DBClient
+	*base.DBClient
 }
 
 // NewUserClient creates a new UserClient.
-func NewLeaderboardClient(dbClient *DBClient) *LeaderboardClient {
+func NewLeaderboardClient(dbClient *base.DBClient) *LeaderboardClient {
 	return &LeaderboardClient{DBClient: dbClient}
 }
 
@@ -59,29 +61,30 @@ func (uc *LeaderboardClient) insertUsernames(names map[string]bool) error {
 	return tx.Commit()
 }
 
-func main() {
-	dbClient := NewDBClient()
+func SubmitUsernames(usernames map[string]bool) error {
+	filtered_usernames := nameFilter.Filter(usernames)
+	err := connect_and_submit(filtered_usernames)
+	return err
+}
+
+func connect_and_submit(usernames map[string]bool) error {
+	dbClient := base.NewDBClient()
 	err := dbClient.Connect()
 	if err != nil {
 		fmt.Println("Failed to connect to database:", err)
-		return
+		return err
 	}
-	defer dbClient.Close()
+	defer func(dbClient *base.DBClient) {
+		dbClientErr := dbClient.Close()
+		if dbClientErr != nil {
+			fmt.Println(dbClientErr.Error())
+		}
+	}(dbClient)
 
 	Client := NewLeaderboardClient(dbClient)
-	Client.DBClient.Connect()
-
-	usernames := map[string]bool{
-		"test123":     true,
-		"test12343":   true,
-		"test123213":  true,
-		"test1235534": true,
-	}
-
 	err = Client.insertUsernames(usernames) // Example usage
 	if err == nil {
 		fmt.Println("Successfully saved usernames.")
-	} else {
-		log.Fatal(err.Error())
 	}
+	return err
 }

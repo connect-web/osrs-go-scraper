@@ -1,4 +1,4 @@
-package leaderboards
+package limits
 
 type PageLimitInfo struct {
 	Limit       int
