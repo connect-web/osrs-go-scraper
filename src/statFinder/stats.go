@@ -155,12 +155,13 @@ func PlayersLookup(playerMapChunk map[string]int, proxyIterator *utils.ProxyIter
 			statsFound++
 			// shows player stats
 			//fmt.Printf("%d: %v\n", player)
-			fmt.Println(statsFound)
+			// fmt.Println(statsFound)
 			results.Players = append(results.Players, player)
 
 		} else if err.Error() == "Page not found" {
 			// user not found
 			results.NotFound[player_id] = struct{}{}
+			continue
 		} else {
 			log.Printf(err.Error())
 		}
