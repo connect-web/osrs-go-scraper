@@ -38,7 +38,7 @@ func main() {
 }
 
 func findNewPlayers() bool { // returns true if finished getting all new players
-	playerMap, NewPlayerError := database.GetNewPlayers(50_000)
+	playerMap, NewPlayerError := database.GetNewPlayers(30_000)
 
 	if len(playerMap) == 0 {
 		return true
