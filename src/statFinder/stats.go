@@ -23,6 +23,7 @@ func main() {
 
 	if err == nil {
 		fmt.Println(player)
+		// shows player stats
 	} else {
 		log.Printf(err.Error())
 	}
