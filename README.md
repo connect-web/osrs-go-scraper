@@ -24,11 +24,12 @@ This dataset added more insightful features to my time series dataset on the sam
 ## Creating docker instance
 
 ```shell
-docker run -d --name runescape-database -p 5432:5432 \
+docker run -d --name runescape-database \
+  -p 127.0.0.1:5432:5432  \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_DB=database \
-  -e POSTGRES_PASSWORD=mypassword \
-  DOCKER_NAME/osrs-low-latency:latest
+  -e POSTGRES_PASSWORD=mypassword  \
+  timescale/timescaledb-ha:pg16
 ```
 ### Required:
 replace ```mypassword``` with a secure password
@@ -38,7 +39,10 @@ You can change the external port which is the first ```5432``` if you are alread
 
 ```postgres``` can be replaced with a desired username
 ```database``` can be replaced with a desired database
+```127.0.0.1``` can be replaced with a host to expose the container outside of localhost.
 
+- After creating your docker instance you must create the extensions & tables in the ```./sql``` folder in the respective files.
+- Coming soon: Docker file with setup for database
 
 ## Environmental variables
 
@@ -79,3 +83,28 @@ then you can simply run with
 ```shell
 ./names
 ```
+
+### Stats finder
+
+**Navigate to directory:**
+src/statFinder
+
+Add a file named `proxies.txt` in the directory.
+`proxies.txt` must be a file containing proxies with the following:
+```ip:port:user:pass``` in each line, one line per proxy.
+
+```shell
+go run stats.go
+```
+
+or you can build it and run it in a new directory without any source files
+
+```shell
+go build stats.go
+```
+
+then you can simply run with
+```shell
+./names
+```
+
