@@ -14,10 +14,11 @@ import (
 
 var (
 	start                     = time.Now().Unix()
-	threads                   = 20
+	threads                   = 50
 	maxNbConcurrentGoroutines = flag.Int("MaxRoutines", threads, "The number of goroutines that are allowed to run concurrently")
 	proxyIterator             = utils.NewProxyIterator("proxies.txt")
 	usernames_verified        = 0
+	usernameBatchSize         = 5000
 )
 
 type accInfo struct {
@@ -25,11 +26,16 @@ type accInfo struct {
 }
 
 func main() {
-	run()
+	for {
+		run()
+		// todo add a log to see how long it takes to scrape the full Hiscores.
+		// new table in database for logging
+	}
 }
 
 func run() {
-	limitManager := limits.NewPageLimitManager() //FindLimits()
+	limitManager := limits.NewPageLimitManager()
+	//limitManager := FindLimits()
 
 	concurrentGoroutines := make(chan struct{}, *maxNbConcurrentGoroutines)
 	respChan := make(chan accInfo)
@@ -62,7 +68,7 @@ func run() {
 					continue
 				}
 				new_names[username] = struct{}{}
-				if len(new_names)%50_000 == 0 {
+				if len(new_names)%usernameBatchSize == 0 {
 					// the Larger the batch size for usernames
 					// = Less usernames due to removed duplicates
 					err := database.SubmitUsernames(new_names)
@@ -73,7 +79,7 @@ func run() {
 						fmt.Printf("%.2fK Usernames verified in database!\n", float64(usernames_verified/1000))
 
 						secondsRan := time.Now().Unix() - start
-						playersPerSecond := float64(len(new_names)) / float64(secondsRan)
+						playersPerSecond := float64(usernames_verified) / float64(secondsRan)
 						playersPerHour := (playersPerSecond * 3600) / 1000 // K players per hour.
 						fmt.Printf("%.2fK unique Names @ %.2fK/hr\n", float64(usernames_verified)/1000, playersPerHour)
 
