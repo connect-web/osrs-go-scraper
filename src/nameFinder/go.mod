@@ -4,8 +4,8 @@ go 1.22.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
-	github.com/connect-web/Low-Latency-DB v1.1.0
-	github.com/connect-web/Low-Latency-Utils v1.0.7
+	github.com/connect-web/Low-Latency-DB v1.1.1
+	github.com/connect-web/Low-Latency-Utils v1.0.9
 )
 
 require (
