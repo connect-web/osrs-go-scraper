@@ -1,0 +1,6 @@
+github.com/connect-web/Low-Latency-DB v1.0.8 h1:6aycI3qWyU8gP4D6C16QGFPWSiujfBHBaqQvSExgJBg=
+github.com/connect-web/Low-Latency-DB v1.0.8/go.mod h1:GAvkIkpx9pzEfIcEKlhdxpqG1Bdi5q707XujIhspJGo=
+github.com/connect-web/Low-Latency-Utils v1.0.9 h1:J0I7gYCkD2Iz9avaQuVt+KKKWTTS3BqrGoKq6UK9dOo=
+github.com/connect-web/Low-Latency-Utils v1.0.9/go.mod h1:M1twEpUTX+I3WE02a0FquL1oNM1pdZWuu1xoVmwnBwc=
+github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
