@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	database "github.com/connect-web/Low-Latency-DB"
-	utils "github.com/connect-web/Low-Latency-Utils"
+	"github.com/connect-web/Low-Latency/internal/database"
+	"github.com/connect-web/Low-Latency/internal/utils/entities"
+	"github.com/connect-web/Low-Latency/internal/utils/stats"
+
 	"log"
 	"sync"
 	"time"
@@ -12,9 +14,9 @@ import (
 
 var (
 	start                     = time.Now().Unix()
-	threads                   = 50
+	threads                   = 10
 	maxNbConcurrentGoroutines = flag.Int("MaxRoutines", threads, "The number of goroutines that are allowed to run concurrently")
-	proxyIterator             = utils.NewProxyIterator("proxies.txt")
+	proxyIterator             = entities.NewProxyIterator("proxies.txt")
 	statsFound                = 0
 	playersInserted           = 0
 	notfoundInserted          = 0
@@ -24,7 +26,7 @@ var (
 )
 
 type PlayerLookupResults struct {
-	Players  []utils.SimplePlayer
+	Players  []stats.SimplePlayer
 	NotFound map[int]struct{}
 }
 
@@ -32,7 +34,10 @@ func main() {
 	for {
 		// if finished getting all new players then update old ones
 		if findNewPlayers() {
-			updatePlayers()
+			if updatePlayers() {
+				// 10 minute rest if no new data to scrape
+				time.Sleep(10 * time.Minute)
+			}
 		}
 	}
 }
@@ -49,18 +54,22 @@ func findNewPlayers() bool { // returns true if finished getting all new players
 	return false
 }
 
-func updatePlayers() {
+func updatePlayers() bool {
 	playerMap, NewPlayerError := database.GetOutdatedPlayers(5000)
+	if len(playerMap) == 0 {
+		return true // returns true if no players required update
+	}
 	if NewPlayerError == nil {
 		FindPlayers(playerMap)
 	}
+	return false
 }
 
 func FindPlayers(playerMap map[string]int) {
-	players := []utils.SimplePlayer{}
+	players := []stats.SimplePlayer{}
 	notFoundPlayerIds := make(map[int]struct{}) // same as array but without duplicates.
 
-	chunkedPlayerMap := utils.ChunkUserMap(playerMap, 10)
+	chunkedPlayerMap := entities.ChunkUserMap(playerMap, 10)
 
 	concurrentGoroutines := make(chan struct{}, *maxNbConcurrentGoroutines)
 	respChan := make(chan PlayerLookupResults)
@@ -68,7 +77,7 @@ func FindPlayers(playerMap map[string]int) {
 
 	for _, playerChunk := range chunkedPlayerMap {
 		wg.Add(1)
-		go func(playerMapChunk map[string]int, c chan PlayerLookupResults, iterator *utils.ProxyIterator) {
+		go func(playerMapChunk map[string]int, c chan PlayerLookupResults, iterator *entities.ProxyIterator) {
 			defer wg.Done()
 			concurrentGoroutines <- struct{}{}
 			c <- PlayersLookup(playerMapChunk, iterator)
@@ -85,12 +94,12 @@ func FindPlayers(playerMap map[string]int) {
 			if len(players)%insertSizePlayers == 0 {
 				err := database.InsertSimplePlayers(players)
 				if err != nil {
-					fmt.Printf("Failed to submit %d usernames.\n", len(players))
+					fmt.Printf("Failed to submit %d stats.\n", len(players))
 				} else {
 					playersInserted += len(players)
-					fmt.Printf("%.2fK unique Names @ %.2fK/hr\n", float64(playersInserted)/1000, getHourly(playersInserted))
+					fmt.Printf("%.2fK Players stats inserted @ %.2fK/hr\n", float64(playersInserted)/1000, getHourly(playersInserted))
 					// Reset to prevent duplicate entries.
-					players = []utils.SimplePlayer{}
+					players = []stats.SimplePlayer{}
 				}
 			}
 		}
@@ -119,7 +128,7 @@ func FindPlayers(playerMap map[string]int) {
 	if len(notFoundPlayerIds) > 0 {
 		err := database.InsertNotFound(notFoundPlayerIds)
 		if err != nil {
-			fmt.Printf("Failed to submit %d usernames.\n", len(notFoundPlayerIds))
+			fmt.Printf("Failed to submit %d stats.\n", len(notFoundPlayerIds))
 		} else {
 			notfoundInserted += len(notFoundPlayerIds)
 			fmt.Printf("%.2fK Not found @ %.2fK/hr\n", float64(notfoundInserted)/1000, getHourly(notfoundInserted))
@@ -134,22 +143,22 @@ func FindPlayers(playerMap map[string]int) {
 			fmt.Printf("Failed to submit %d usernames.\n", len(players))
 		} else {
 			playersInserted += len(players)
-			fmt.Printf("%.2fK unique Names @ %.2fK/hr\n", float64(playersInserted)/1000, getHourly(playersInserted))
+			fmt.Printf("%.2fK Players stats inserted @ %.2fK/hr\n", float64(playersInserted)/1000, getHourly(playersInserted))
 			// Reset to prevent duplicate entries.
-			players = []utils.SimplePlayer{}
+			players = []stats.SimplePlayer{}
 		}
 	}
 
 }
 
-func PlayersLookup(playerMapChunk map[string]int, proxyIterator *utils.ProxyIterator) PlayerLookupResults {
+func PlayersLookup(playerMapChunk map[string]int, proxyIterator *entities.ProxyIterator) PlayerLookupResults {
 	results := PlayerLookupResults{
-		Players:  []utils.SimplePlayer{},
+		Players:  []stats.SimplePlayer{},
 		NotFound: make(map[int]struct{}),
 	}
 
 	for username, player_id := range playerMapChunk {
-		player, err := utils.Get_player_stats(username, player_id, proxyIterator)
+		player, err := Get_player_stats(username, player_id, proxyIterator)
 
 		if err == nil {
 			statsFound++
@@ -176,7 +185,7 @@ func test() {
 		log.Fatalf("Failed to get new players: %s\n", NewPlayerError.Error())
 	}
 
-	chunkedPlayerMap := utils.ChunkUserMap(playerMap, 10)
+	chunkedPlayerMap := entities.ChunkUserMap(playerMap, 10)
 
 	for _, playerMapChunk := range chunkedPlayerMap {
 		PlayersLookup(playerMapChunk, proxyIterator)

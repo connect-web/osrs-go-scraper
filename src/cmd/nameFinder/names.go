@@ -3,11 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	database "github.com/connect-web/Low-Latency-DB"
-	utils "github.com/connect-web/Low-Latency-Utils"
-	"names.go/entities"
-	limits "names.go/entities/limits"
-
+	"github.com/connect-web/Low-Latency/internal/database"
+	"github.com/connect-web/Low-Latency/internal/utils/entities"
+	"github.com/connect-web/Low-Latency/internal/utils/name"
 	"sync"
 	"time"
 )
@@ -16,7 +14,7 @@ var (
 	start                     = time.Now().Unix()
 	threads                   = 50
 	maxNbConcurrentGoroutines = flag.Int("MaxRoutines", threads, "The number of goroutines that are allowed to run concurrently")
-	proxyIterator             = utils.NewProxyIterator("proxies.txt")
+	proxyIterator             = entities.NewProxyIterator("proxies.txt")
 	usernames_verified        = 0
 	usernameBatchSize         = 5000
 )
@@ -34,8 +32,8 @@ func main() {
 }
 
 func run() {
-	limitManager := limits.NewPageLimitManager()
-	//limitManager := FindLimits()
+	//limitManager := name.NewPageLimitManager()
+	limitManager := FindLimits()
 
 	concurrentGoroutines := make(chan struct{}, *maxNbConcurrentGoroutines)
 	respChan := make(chan accInfo)
@@ -47,13 +45,13 @@ func run() {
 
 		for page := 0; page < hiscore_table_info.Limit; page++ {
 			wg.Add(1)
-			go func(hiscoreType limits.HiscoreType, page int, c chan accInfo, iterator *utils.ProxyIterator) {
+			go func(hiscoreType name.HiscoreType, page int, c chan accInfo, iterator *entities.ProxyIterator) {
 				/*
 					Could add larger batch size to the goroutine however they are lightweight enough for current performance target
 				*/
 				defer wg.Done()
 				concurrentGoroutines <- struct{}{}
-				unique_names, _ := entities.GetNames(hiscoreType, page, iterator)
+				unique_names, _ := GetNames(hiscoreType, page, iterator)
 				c <- accInfo{unique_names: unique_names}
 				<-concurrentGoroutines
 			}(hiscore_table_info, page, respChan, proxyIterator)
