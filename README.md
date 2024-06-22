@@ -70,18 +70,18 @@ Add a file named `proxies.txt` in the directory.
 ```ip:port:user:pass``` in each line, one line per proxy.
 
 ```shell
-go run names.go limitfinder.go
+go run name.go limitfinder.go
 ```
 
 or you can build it and run it in a new directory without any source files
 
 ```shell
-go build names.go limitfinder.go
+go build name.go limitfinder.go
 ```
 
 then you can simply run with
 ```shell
-./names
+./name
 ```
 
 ### Stats finder
@@ -105,6 +105,6 @@ go build stats.go
 
 then you can simply run with
 ```shell
-./names
+./name
 ```
 
