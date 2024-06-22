@@ -1,4 +1,4 @@
-package limits
+package name
 
 type HiscoreType struct {
 	Skill     string `json:"skill"`

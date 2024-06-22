@@ -1,4 +1,4 @@
-package entities
+package name
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package limits
+package name
 
 var HiscoreSkills = []HiscoreType{
 	{Skill: "Overall", Id: 0, Limit: 80_000},

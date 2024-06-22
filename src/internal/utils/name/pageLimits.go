@@ -1,4 +1,4 @@
-package limits
+package name
 
 type PageLimitInfo struct {
 	Limit       int
