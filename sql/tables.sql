@@ -1,17 +1,17 @@
 -- The players table storing player_id's, Name's and first appearances to the database
 CREATE TABLE IF NOT EXISTS players
 (
-    ID         SERIAL PRIMARY KEY,
-    NAME       CITEXT UNIQUE NOT NULL,
-    FIRST_SEEN timestamptz   NOT NULL DEFAULT NOW()
+    id         SERIAL PRIMARY KEY,
+    name       CITEXT UNIQUE NOT NULL,
+    first_seen timestamptz   NOT NULL DEFAULT NOW()
 );
 
 -- These players do not need to be scraped they are low priority.
 CREATE TABLE IF NOT EXISTS old_players
 (
-    ID         SERIAL,
-    NAME       CITEXT PRIMARY KEY NOT NULL ,
-    FIRST_SEEN timestamptz   NOT NULL DEFAULT NOW()
+    id         SERIAL,
+    name       CITEXT PRIMARY KEY NOT NULL,
+    first_seen timestamptz        NOT NULL DEFAULT NOW()
 );
 
 -- The user is not found on Hiscores
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS old_players
 CREATE TABLE IF NOT EXISTS not_found
 (
     PlayerId   SERIAL PRIMARY KEY,
-    FIRST_SEEN timestamptz NOT NULL DEFAULT NOW(),
+    first_seen timestamptz NOT NULL DEFAULT NOW(),
     FOREIGN KEY (PlayerId) REFERENCES players (id)
 );
 
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS not_found
 CREATE TABLE IF NOT EXISTS player_live
 (
     PlayerId          INT PRIMARY KEY,
-    LAST_UPDATED      timestamptz not null default NOW(),
+    last_updated      timestamptz not null default NOW(),
     skills_experience JSONB,
     skills_levels     JSONB,
     skills_ratio      JSONB,
@@ -35,3 +35,13 @@ CREATE TABLE IF NOT EXISTS player_live
     FOREIGN KEY (PlayerId) REFERENCES players (id)
 );
 
+
+CREATE TABLE IF NOT EXISTS player_live_stats
+(
+    PlayerId     INT PRIMARY KEY,
+    LAST_UPDATED timestamptz not null, -- THIS MUST MATCH THE player_live LAST_UPDATED
+    combat_level smallint,
+    Overall      bigint,
+    total_level  smallint,
+    FOREIGN KEY (PlayerId) REFERENCES players (id)
+);
