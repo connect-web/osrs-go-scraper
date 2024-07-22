@@ -45,3 +45,24 @@ CREATE TABLE IF NOT EXISTS player_live_stats
     total_level  smallint,
     FOREIGN KEY (PlayerId) REFERENCES players (id)
 );
+
+CREATE TABLE IF NOT EXISTS player_gains
+(
+    PlayerId     INT PRIMARY KEY,
+    LAST_UPDATED timestamptz not null DEFAULT NOW(), -- THIS MUST MATCH THE player_live LAST_UPDATED
+    skills_experience JSONB,
+    skills_ratio      JSONB,
+    minigames         JSONB,
+    FOREIGN KEY (PlayerId) REFERENCES players (id)
+);
+
+
+CREATE SCHEMA IF NOT EXISTS STATS;
+
+CREATE TABLE IF NOT EXISTS stats.Pearson(
+    PlayerId     INT PRIMARY KEY,
+    LAST_UPDATED timestamptz not null, -- THIS MUST MATCH THE player_live LAST_UPDATED
+    skill TEXT,
+    linked_players INTEGER[],
+    FOREIGN KEY (PlayerId) REFERENCES players (id)
+);
