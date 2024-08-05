@@ -1,34 +1,43 @@
-package database
+package live
 
 import (
 	"fmt"
-	"github.com/connect-web/Low-Latency/internal/utils/entities"
-	"github.com/connect-web/Low-Latency/internal/utils/stats"
+	"github.com/connect-web/Low-Latency/internal/utility/entities"
+	"github.com/connect-web/Low-Latency/internal/utility/playerutils"
 	"log"
+	"strconv"
 	"strings"
 )
 
-func (uc *LeaderboardClient) InsertOrUpdateFeatures(players []stats.AdvancedPlayer) (err error) {
-	if !uc.DBClient.Connected {
-		log.Fatal("Not connected to database")
-		// todo fatal might not be the best choice, reconnect would be a better solution.
-	}
-
+func (liveClient *LiveClient) InsertOrUpdateLiveStats(players []playerutils.PlayerTotals) (err error) {
 	if 10_000 < len(players) {
 		// batch the player_id inserts
 		err = nil
-		for _, simplePlayerBatch := range entities.ChunkAdvancedPlayer(players, 10_000) {
-			err = uc.InsertOrUpdateFeatures(simplePlayerBatch)
+		for _, simplePlayerBatch := range entities.ChunkPlayer(players, 10_000) {
+			err = liveClient.InsertOrUpdateLiveStats(simplePlayerBatch)
 		}
 		return err
 	}
 
-	valueStrings := []string{}
-	valueArgs := []interface{}{}
+	var valueStrings []string
+	var valueArgs []interface{}
+
+	paramPrint := map[int]int{}
+
 	column_count := 5
-	for i, plr := range players {
+	i := 0
+	for _, plr := range players {
+		if plr.CombatLevel == 3 && plr.OverallExperience == 0 && plr.TotalLevel == 23 {
+			// skip if skills & Minigames are empty.
+			continue
+		}
 		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", i*column_count+1, i*column_count+2, i*column_count+3, i*column_count+4, i*column_count+5))
 		valueArgs = append(valueArgs, plr.PlayerId, plr.LastUpdated, plr.CombatLevel, plr.OverallExperience, plr.TotalLevel)
+		paramPrint[plr.PlayerId] = plr.PlayerId
+		i++
+	}
+	if len(valueStrings) == 0 {
+		return nil
 	}
 
 	// Create the insert query
@@ -43,7 +52,7 @@ func (uc *LeaderboardClient) InsertOrUpdateFeatures(players []stats.AdvancedPlay
 	       `, strings.Join(valueStrings, ","))
 
 	// Begin a transaction
-	tx, err := uc.DBClient.DB.Begin()
+	tx, err := liveClient.Client.DB.Begin()
 	if err != nil {
 		log.Println("Failed to begin transaction:", err)
 		return err
@@ -59,6 +68,15 @@ func (uc *LeaderboardClient) InsertOrUpdateFeatures(players []stats.AdvancedPlay
 			fmt.Println("Failed to rollback on advanced players Insert/update..?")
 		}
 		log.Println("Failed to bulk insert into player_live_stats:", err)
+		if strings.Contains(err.Error(), "data type of parameter $") {
+			paramNumber := strings.Split(err.Error(), "data type of parameter $")[1]
+			fmt.Printf("param: %s.\n", paramNumber)
+			integer, integerErr := strconv.Atoi(paramNumber)
+			if integerErr == nil {
+				fmt.Println(paramPrint[integer])
+			}
+
+		}
 		return err
 	}
 

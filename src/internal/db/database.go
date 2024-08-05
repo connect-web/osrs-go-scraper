@@ -1,34 +1,60 @@
-package database
+package db
 
 import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
 	"os"
+	"time"
 )
 
-// DBClient represents a client to the database with a connection status.
-type DBClient struct {
+// Client represents a client to the database with a connection status.
+type Client struct {
 	DB              *sql.DB
 	Connected       bool
 	ConnectionError error
 }
 
 // NewDBClient initializes a new database client.
-func NewDBClient() *DBClient {
-	return &DBClient{
+func NewDBClient() *Client {
+	client := &Client{
 		Connected: false,
 	}
+	err := client.Connect()
+	if err != nil {
+		fmt.Printf("failed to connect to db: %s\n", err.Error())
+		var retries int
+		for !client.Connected {
+			retries++
+			fmt.Printf("%d: Retrying db connection...", retries)
+			_ = client.Connect()
+			time.Sleep(30 * time.Second)
+		}
+	}
+	return client
 }
 
 // Connect establishes a connection to the database.
-func (client *DBClient) Connect() error {
+func (client *Client) Connect() error {
+	/*
+
+
+
+		user := os.Getenv("lowLatencyWebUser")
+			password := os.Getenv("lowLatencyWebPassword")
+			host := os.Getenv("lowLatencyWebHost")
+			port := os.Getenv("lowLatencyWebPort")
+			dbname := os.Getenv("lowLatencyWebDatabase")
+
+	*/
+
 	user := os.Getenv("lowLatencyUser")
+
 	password := os.Getenv("lowLatencyPassword")
-
+	//host := os.Getenv("lowLatencyDevHost")
 	host := os.Getenv("lowLatencyHost")
-	port := os.Getenv("lowLatencyPort")
 
+	port := os.Getenv("lowLatencyPort")
 	dbname := os.Getenv("lowLatencyDatabase")
 
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -54,24 +80,9 @@ func (client *DBClient) Connect() error {
 }
 
 // Close terminates the connection to the database.
-func (client *DBClient) Close() error {
+func (client *Client) Close() error {
 	if client.DB != nil {
 		return client.DB.Close()
 	}
 	return nil
-}
-
-func test_connection() {
-	dbClient := NewDBClient()
-	err := dbClient.Connect()
-	if err != nil {
-		fmt.Println("Failed to connect to database:", err)
-		return
-	}
-	defer dbClient.Close()
-
-	if dbClient.Connected {
-		fmt.Println("Connected to database successfully")
-		// Database operations go here
-	}
 }
