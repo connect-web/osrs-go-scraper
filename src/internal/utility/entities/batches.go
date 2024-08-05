@@ -2,13 +2,13 @@ package entities
 
 import (
 	"fmt"
-	"github.com/connect-web/Low-Latency/internal/utils/stats"
+	"github.com/connect-web/Low-Latency/internal/utility/playerutils"
 )
 
 // todo replace all with interface
 
 func ChunkNamesMap(names map[string]struct{}, chunkSize int) []map[string]struct{} {
-	chunks := []map[string]struct{}{}
+	var chunks []map[string]struct{}
 	temp := map[string]struct{}{}
 	for name := range names {
 		temp[name] = struct{}{}
@@ -28,8 +28,8 @@ func ChunkNamesMap(names map[string]struct{}, chunkSize int) []map[string]struct
 }
 
 func ChunkNames(names []string, chunkSize int) [][]string {
-	chunks := [][]string{}
-	temp := []string{}
+	var chunks [][]string
+	var temp []string
 	for _, name := range names {
 		temp = append(temp, name)
 		if len(temp) == chunkSize {
@@ -48,7 +48,7 @@ func ChunkNames(names []string, chunkSize int) [][]string {
 }
 
 func ChunkIdsMap(ids map[int]struct{}, chunkSize int) []map[int]struct{} {
-	chunks := []map[int]struct{}{}
+	var chunks []map[int]struct{}
 	temp := map[int]struct{}{}
 	for name := range ids {
 		temp[name] = struct{}{}
@@ -68,8 +68,8 @@ func ChunkIdsMap(ids map[int]struct{}, chunkSize int) []map[int]struct{} {
 }
 
 func ChunkIds(ids []int, chunkSize int) [][]int {
-	chunks := [][]int{}
-	temp := []int{}
+	var chunks [][]int
+	var temp []int
 	for _, name := range ids {
 		temp = append(temp, name)
 		if len(temp) == chunkSize {
@@ -87,19 +87,19 @@ func ChunkIds(ids []int, chunkSize int) [][]int {
 	return chunks
 }
 
-func ChunkSimplePlayer(ids []stats.SimplePlayer, chunkSize int) [][]stats.SimplePlayer {
-	chunks := [][]stats.SimplePlayer{}
-	temp := []stats.SimplePlayer{}
+func ChunkSimplePlayer(ids []playerutils.SimplePlayer, chunkSize int) [][]playerutils.SimplePlayer {
+	var chunks [][]playerutils.SimplePlayer
+	var temp []playerutils.SimplePlayer
 	for _, name := range ids {
 		temp = append(temp, name)
 		if len(temp) == chunkSize {
 			chunks = append(chunks, temp)
-			temp = []stats.SimplePlayer{}
+			temp = []playerutils.SimplePlayer{}
 		}
 	}
 	if 0 < len(temp) {
 		chunks = append(chunks, temp)
-		temp = []stats.SimplePlayer{}
+		temp = []playerutils.SimplePlayer{}
 	}
 	fmt.Printf("Turned %d SimplePlayers into %d lists of %d SimplePlayers!\n",
 		len(ids), len(chunks), chunkSize,
@@ -107,32 +107,32 @@ func ChunkSimplePlayer(ids []stats.SimplePlayer, chunkSize int) [][]stats.Simple
 	return chunks
 }
 
-func ChunkAdvancedPlayer(ids []stats.AdvancedPlayer, chunkSize int) [][]stats.AdvancedPlayer {
-	chunks := [][]stats.AdvancedPlayer{}
-	temp := []stats.AdvancedPlayer{}
+func ChunkPlayer(ids []playerutils.PlayerTotals, chunkSize int) [][]playerutils.PlayerTotals {
+	var chunks [][]playerutils.PlayerTotals
+	var temp []playerutils.PlayerTotals
 	for _, name := range ids {
 		temp = append(temp, name)
 		if len(temp) == chunkSize {
 			chunks = append(chunks, temp)
-			temp = []stats.AdvancedPlayer{}
+			temp = []playerutils.PlayerTotals{}
 		}
 	}
 	if 0 < len(temp) {
 		chunks = append(chunks, temp)
-		temp = []stats.AdvancedPlayer{}
+		temp = []playerutils.PlayerTotals{}
 	}
-	fmt.Printf("Turned %d AdvancedPlayers into %d lists of %d AdvancedPlayers!\n",
+	fmt.Printf("Turned %d Players into %d lists of %d Players!\n",
 		len(ids), len(chunks), chunkSize,
 	)
 	return chunks
 }
 
 func ChunkUserMap(userMap map[string]int, chunkSize int) []map[string]int {
-	chunks := []map[string]int{}
+	var chunks []map[string]int
 	temp := map[string]int{}
-	for username, player_id := range userMap {
+	for username, playerId := range userMap {
 
-		temp[username] = player_id
+		temp[username] = playerId
 
 		if len(temp) == chunkSize {
 			chunks = append(chunks, temp)
@@ -145,6 +145,27 @@ func ChunkUserMap(userMap map[string]int, chunkSize int) []map[string]int {
 	}
 	fmt.Printf("Turned %d users into %d lists of %d users!\n",
 		len(userMap), len(chunks), chunkSize,
+	)
+	return chunks
+}
+
+func ChunkPearsonResults(data []playerutils.PearsonResults, chunkSize int) [][]playerutils.PearsonResults {
+	var chunks [][]playerutils.PearsonResults
+	var temp []playerutils.PearsonResults
+
+	for _, item := range data {
+		temp = append(temp, item)
+		if len(temp) == chunkSize {
+			chunks = append(chunks, temp)
+			temp = []playerutils.PearsonResults{}
+		}
+	}
+	if 0 < len(temp) {
+		chunks = append(chunks, temp)
+		temp = []playerutils.PearsonResults{}
+	}
+	fmt.Printf("Turned %d Pearson results into %d lists of %d results!\n",
+		len(data), len(chunks), chunkSize,
 	)
 	return chunks
 }

@@ -1,4 +1,4 @@
-package name
+package nameutils
 
 type PageLimitInfo struct {
 	Limit       int
@@ -10,14 +10,14 @@ type PageLimits struct {
 }
 
 func NewPageLimitManager() *PageLimits {
-	page_limits := &PageLimits{
+	pageLimits := &PageLimits{
 		Limits: []HiscoreType{},
 	}
-	page_limits.Reset()
-	return page_limits
+	pageLimits.Reset()
+	return pageLimits
 }
-func (p *PageLimits) Add(hiscore_limit HiscoreType) {
-	p.Limits = append(p.Limits, hiscore_limit)
+func (p *PageLimits) Add(hiscoreLimit HiscoreType) {
+	p.Limits = append(p.Limits, hiscoreLimit)
 }
 
 func (p *PageLimits) Reset() {

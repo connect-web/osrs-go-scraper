@@ -1,4 +1,4 @@
-package name
+package nameutils
 
 import (
 	"fmt"
@@ -7,24 +7,18 @@ import (
 )
 
 func Filter(usernames map[string]struct{}) map[string]struct{} {
-	filtered_usernames := map[string]struct{}{}
+	filteredUsernames := map[string]struct{}{}
 
 	for username := range usernames {
-		filtered_username :=
-			replaceUnicodeNbsp(
-				replaceUnicodeDash(username))
-		filtered_usernames[filtered_username] = struct{}{}
+		filteredUsername := FilterName(username)
+		filteredUsernames[filteredUsername] = struct{}{}
 	}
-	return filtered_usernames
+	return filteredUsernames
 }
 
-func replaceUnicodeNbsp_old(input string) string {
-	// Directly include the non-breaking space character
-	nbsp := "\u00A0"               // Non-breaking space as a Unicode code point
-	re := regexp.MustCompile(nbsp) // Compile a regex with the non-breaking space
-	// Replace matched non-breaking space with a regular space
-
-	return re.ReplaceAllString(input, " ")
+func FilterName(username string) string {
+	return replaceUnicodeNbsp(
+		replaceUnicodeDash(username))
 }
 
 func replaceUnicodeNbsp(input string) string {
@@ -41,17 +35,6 @@ func replaceUnicodeDash(input string) string {
 	re := regexp.MustCompile(dash) // Compile a regex with the non-breaking hyphen
 	// Replace matched non-breaking hyphen with a regular hyphen
 	return re.ReplaceAllString(input, "-")
-}
-
-func test_name_filter() {
-	input := "Galar tank"
-	fmt.Println("Original:", input)
-	fmt.Println("Code points of original name:")
-	printCodePoints(input)
-	output := replaceUnicodeNbsp(input)
-	fmt.Println("Modified:", output)
-	fmt.Println("Code points of modified name:")
-	printCodePoints(output)
 }
 
 // printCodePoints prints the Unicode code points of each character in the string

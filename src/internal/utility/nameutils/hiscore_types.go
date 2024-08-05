@@ -1,4 +1,4 @@
-package name
+package nameutils
 
 type HiscoreType struct {
 	Skill     string `json:"skill"`

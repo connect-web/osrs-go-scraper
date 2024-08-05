@@ -1,4 +1,4 @@
-package name
+package nameutils
 
 var HiscoreMinigames = []HiscoreType{
 	{Minigames: "Bounty Hunter - Hunter", Id: 2, Limit: 80_000},

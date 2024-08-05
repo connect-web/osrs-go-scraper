@@ -10,6 +10,8 @@ import (
 	"sync"
 )
 
+var ProxyList = NewProxyIterator("proxies.txt")
+
 var proxyCount int
 
 type Proxy struct {
@@ -71,8 +73,16 @@ func (p *ProxyIterator) next() (*Proxy, error) {
 }
 
 func readProxiesFromFile(filename string) []Proxy {
-	file, _ := os.Open(filename)
-	defer file.Close()
+	file, fileNotFoundError := os.Open(filename)
+	if fileNotFoundError != nil {
+		log.Fatal(fileNotFoundError.Error())
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
 
 	var proxies []Proxy
 	scanner := bufio.NewScanner(file)
