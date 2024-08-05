@@ -1,4 +1,6 @@
-package stats
+package playerutils
+
+var totalSkills = 23
 
 func removeVirtualLevel(level int16) int16 {
 	var maxLevel int16 = 99
@@ -14,6 +16,13 @@ func (sp *SimplePlayer) calculateOverallLevel() int16 {
 		actualLevel := removeVirtualLevel(int16(level))
 		totalLevel = totalLevel + actualLevel
 	}
+
+	// Since the map does not store level 1's it will need to be added to the total level.
+	skillsTrained := len(sp.SkillLevels)
+	untrainedSkills := totalSkills - skillsTrained
+
+	totalLevel += int16(untrainedSkills)
+
 	return totalLevel
 }
 

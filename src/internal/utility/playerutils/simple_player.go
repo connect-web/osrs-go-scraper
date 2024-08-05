@@ -1,4 +1,4 @@
-package stats
+package playerutils
 
 import (
 	"database/sql"
@@ -25,18 +25,21 @@ type JsonResponse struct {
 }
 
 type SimplePlayer struct {
-	Username    string
-	LastUpdated time.Time
-	PID         int
-	Skills      map[string]int // Skill : Experience directly from Hiscores
-	Minigames   map[string]int // Minigame/activity : score directly from Hiscores
+	Username       string
+	LastUpdated    time.Time
+	PID            int
+	Skills         map[string]int     // Skill : Experience directly from Hiscores
+	Minigames      map[string]int     // Minigame/activity : score directly from Hiscores
+	MinigamesDaily map[string]float32 // Minigame/activity : score directly from Hiscores
+
 	SkillLevels map[string]int
 	SkillRatios map[string]float32 // 32 bits will have enough useful data
 }
 
-func NewSimplePlayer(PID int) *SimplePlayer {
-	return &SimplePlayer{
+func NewSimplePlayer(PID int, name string) SimplePlayer {
+	return SimplePlayer{
 		PID:         PID,
+		Username:    name,
 		Skills:      make(map[string]int),
 		Minigames:   make(map[string]int),
 		SkillLevels: make(map[string]int),
@@ -45,6 +48,13 @@ func NewSimplePlayer(PID int) *SimplePlayer {
 }
 
 func (sp *SimplePlayer) LoadJson(response JsonResponse) bool {
+	if sp.Skills == nil {
+		sp.Skills = make(map[string]int)
+	}
+	if sp.Minigames == nil {
+		sp.Minigames = make(map[string]int)
+	}
+
 	valid := false
 	for _, val := range response.Skills {
 		if val.Xp != 0 {
@@ -77,7 +87,7 @@ func (sp *SimplePlayer) Add(earnedSkills map[string]int, earnedMinigames map[str
 }
 
 func (sp *SimplePlayer) String() string {
-	return fmt.Sprintf("Player (%s)\nSkills:\n%v,\nMinigames:\n%v\n", sp.Username, sp.Skills, sp.Minigames)
+	return fmt.Sprintf("PlayerTotals (%s)\nSkills:\n%v,\nMinigames:\n%v\n", sp.Username, sp.Skills, sp.Minigames)
 }
 
 func (sp *SimplePlayer) Dump() map[string]interface{} {
@@ -149,8 +159,4 @@ func (sp *SimplePlayer) Compare(other *SimplePlayer) map[string]map[string]int {
 		"Skills":    skillDiff,
 		"Minigames": minigameDiff,
 	}
-}
-
-func IsEmptyDiff(both map[string]map[string]int) bool {
-	return len(both["Skills"]) == 0 && len(both["Minigames"]) == 0
 }

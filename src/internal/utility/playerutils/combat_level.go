@@ -1,4 +1,4 @@
-package stats
+package playerutils
 
 import (
 	"math"
@@ -34,8 +34,4 @@ func CombatLevel(attack, defence, strength, hitpoints, prayer, ranged, magic int
 	maximumLevel := math.Max(melee, math.Max(rng, mage))
 	level := math.Round((base+maximumLevel)*1000) / 1000
 	return minimumCombatLevel(int16(math.Floor(level)))
-}
-
-func example() {
-	_ = CombatLevel(42, 40, 40, 41, 44, 35, 41)
 }
