@@ -1,8 +1,9 @@
-package entities
+package requests
 
 import (
 	"errors"
 	"fmt"
+	"github.com/connect-web/Low-Latency/internal/utility/entities"
 	"io"
 	"log"
 	"math/rand"
@@ -13,26 +14,29 @@ import (
 )
 
 var (
-	timeout               = 60 // timeout in seconds for connections to urls.
-	rate_limited          = 0
-	server_load_reached   = 0
-	proxy_backend_failure = 0
+	timeout             = 60 // timeout in seconds for connections to urls.
+	rateLimited         = 0
+	successfulRequests  = 0
+	serverLoadReached   = 0
+	proxyBackendFailure = 0
+	requestFailures     = 0
+	timedOut            = 0
 )
 
-func Request(url string, parameters map[string]string, proxy_iterator *ProxyIterator, retryCount int) (string, error) {
+func Request(url string, parameters map[string]string, proxyIterator *entities.ProxyIterator, retryCount int) (string, error) {
 	if retryCount > 100 { // Limiting the number of retries
 		return "", errors.New("retry limit exceeded")
 	}
 
 	retryCount++
 
-	req, err := build_request(url, parameters)
+	req, err := buildRequest(url, parameters)
 	if err != nil {
 		log.Println(err.Error())
 		return "", err
 	}
 
-	client, clientErr := build_client(proxy_iterator)
+	client, clientErr := build_client(proxyIterator)
 	if clientErr != nil {
 		log.Println(clientErr.Error())
 		return "", clientErr
@@ -40,73 +44,90 @@ func Request(url string, parameters map[string]string, proxy_iterator *ProxyIter
 
 	response, responseError := client.Do(req)
 	if responseError != nil {
-		fmt.Println(responseError.Error())
+		if strings.Contains(responseError.Error(), "Client.Timeout") {
+			timedOut++
+			if timedOut%100 == 0 {
+				fmt.Printf("%d timeouts\n", timedOut)
+			}
+		} else {
+			fmt.Println(responseError.Error())
+		}
+
 		// Proxy failure
 		// timeouts / offline proxies... just retry with a new proxy
 		time.Sleep(time.Duration(100) * time.Millisecond)
-		fmt.Println("Client failed to send request.")
-		return Request(url, parameters, proxy_iterator, retryCount)
+		requestFailures++
+		if requestFailures%1000 == 0 {
+			fmt.Printf("[%d] Client failed to send request.\n", requestFailures)
+		}
+		return Request(url, parameters, proxyIterator, retryCount)
 	}
 
 	switch response.StatusCode {
 	case 404:
 		// page not found
 		// user banned or username changed
-		return "", errors.New("Page not found")
+		return "", errors.New("page not found")
 
 	case 429:
 		// Proxy rate limited
 		time.Sleep(time.Duration(rand.Intn(500)+1000) * time.Millisecond)
-		rate_limited++
-		if rate_limited%100 == 0 {
-			fmt.Printf("%d Rate limit reached.\n", rate_limited)
+		rateLimited++
+		if rateLimited%100 == 0 {
+			fmt.Printf("%d Rate limit reached.\n", rateLimited)
 		}
-		return Request(url, parameters, proxy_iterator, retryCount)
+		return Request(url, parameters, proxyIterator, retryCount)
 	case 502:
 		// Proxy backend issue
 		time.Sleep(time.Duration(rand.Intn(400)+100) * time.Millisecond)
-		proxy_backend_failure++
-		if proxy_backend_failure%100 == 0 {
-			fmt.Printf("%d Proxy backend issue.\n", proxy_backend_failure)
+		proxyBackendFailure++
+		if proxyBackendFailure%100 == 0 {
+			fmt.Printf("%d Proxy backend issue.\n", proxyBackendFailure)
 		}
-		return Request(url, parameters, proxy_iterator, retryCount)
+		return Request(url, parameters, proxyIterator, retryCount)
 	case 503:
 		// Server under high load
 		time.Sleep(time.Duration(rand.Intn(1000)+1500) * time.Millisecond)
-		server_load_reached++
-		if server_load_reached%100 == 0 {
-			fmt.Printf("%d Server load reached.\n", server_load_reached)
+		serverLoadReached++
+		if serverLoadReached%100 == 0 {
+			fmt.Printf("%d Server load reached.\n", serverLoadReached)
 		}
-		return Request(url, parameters, proxy_iterator, retryCount)
+		return Request(url, parameters, proxyIterator, retryCount)
 	case 504:
 		// Proxy backend issue
 		time.Sleep(time.Duration(rand.Intn(400)+100) * time.Millisecond)
-		proxy_backend_failure++
-		if proxy_backend_failure%100 == 0 {
-			fmt.Printf("%d Proxy backend issue.\n", proxy_backend_failure)
+		proxyBackendFailure++
+		if proxyBackendFailure%100 == 0 {
+			fmt.Printf("%d Proxy backend issue.\n", proxyBackendFailure)
 		}
-		return Request(url, parameters, proxy_iterator, retryCount)
+		return Request(url, parameters, proxyIterator, retryCount)
 
 	case 200:
 		bodyBytes, readErr := io.ReadAll(response.Body)
+		successfulRequests++
+
+		if successfulRequests%1000 == 0 {
+			fmt.Printf("%d Valid requests\n", successfulRequests)
+		}
+
 		if readErr != nil {
 			// local Error reading body
 			log.Println(readErr.Error())
-			return Request(url, parameters, proxy_iterator, retryCount)
+			return Request(url, parameters, proxyIterator, retryCount)
 		}
 
 		bodyString := string(bodyBytes)
 
 		// 429 but HTML Page
 		if strings.Contains(bodyString, "Due to excessive use of the Hiscore system, your IP has been temporarily blocked") {
-			rate_limited++
-			if rate_limited%100 == 0 {
-				fmt.Printf("%d Rate limit reached.\n", rate_limited)
+			rateLimited++
+			if rateLimited%100 == 0 {
+				fmt.Printf("%d Rate limit reached.\n", rateLimited)
 			}
 			// rate limits reached on this Script should Sleep for long duration.
 			// This will ensure the Skill Updater has priority over these Requests.
 			time.Sleep(10 * time.Second)
-			return Request(url, parameters, proxy_iterator, retryCount)
+			return Request(url, parameters, proxyIterator, retryCount)
 		} else {
 			return bodyString, nil
 		}
@@ -119,7 +140,7 @@ func Request(url string, parameters map[string]string, proxy_iterator *ProxyIter
 
 }
 
-func build_request(api_url string, parameters map[string]string) (*http.Request, error) {
+func buildRequest(api_url string, parameters map[string]string) (*http.Request, error) {
 	if len(parameters) != 0 {
 		// Add Query Params if required
 		params := url.Values{}
@@ -134,7 +155,7 @@ func build_request(api_url string, parameters map[string]string) (*http.Request,
 	return req, err
 }
 
-func build_client(proxy_iterator *ProxyIterator) (*http.Client, error) {
+func build_client(proxy_iterator *entities.ProxyIterator) (*http.Client, error) {
 	proxy_url, err := proxy_iterator.Next()
 	if err != nil {
 		fmt.Printf("Error building proxy url : %s\n", err.Error())
