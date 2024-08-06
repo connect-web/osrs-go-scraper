@@ -6,14 +6,6 @@ CREATE TABLE IF NOT EXISTS players
     first_seen timestamptz   NOT NULL DEFAULT NOW()
 );
 
--- These players do not need to be scraped they are low priority.
-CREATE TABLE IF NOT EXISTS old_players
-(
-    id         SERIAL,
-    name       CITEXT PRIMARY KEY NOT NULL,
-    first_seen timestamptz        NOT NULL DEFAULT NOW()
-);
-
 -- The user is not found on Hiscores
 -- This can mean: Banned || Username was changed
 CREATE TABLE IF NOT EXISTS not_found
@@ -36,20 +28,19 @@ CREATE TABLE IF NOT EXISTS player_live
 );
 
 
-CREATE TABLE IF NOT EXISTS player_live_stats
-(
+CREATE TABLE IF NOT EXISTS player_live_stats(
     PlayerId     INT PRIMARY KEY,
     LAST_UPDATED timestamptz not null, -- THIS MUST MATCH THE player_live LAST_UPDATED
-    combat_level smallint,
-    Overall      bigint,
-    total_level  smallint,
+    combat_level smallint DEFAULT 3,
+    Overall      bigint DEFAULT 0,
+    total_level  smallint DEFAULT 32,
     FOREIGN KEY (PlayerId) REFERENCES players (id)
 );
 
 CREATE TABLE IF NOT EXISTS player_gains
 (
-    PlayerId     INT PRIMARY KEY,
-    LAST_UPDATED timestamptz not null DEFAULT NOW(), -- THIS MUST MATCH THE player_live LAST_UPDATED
+    PlayerId          INT PRIMARY KEY,
+    LAST_UPDATED      timestamptz not null DEFAULT NOW(), -- THIS MUST MATCH THE player_live LAST_UPDATED
     skills_experience JSONB,
     skills_ratio      JSONB,
     minigames         JSONB,
@@ -57,12 +48,112 @@ CREATE TABLE IF NOT EXISTS player_gains
 );
 
 
-CREATE SCHEMA IF NOT EXISTS STATS;
 
-CREATE TABLE IF NOT EXISTS stats.Pearson(
-    PlayerId     INT PRIMARY KEY,
-    LAST_UPDATED timestamptz not null, -- THIS MUST MATCH THE player_live LAST_UPDATED
-    skill TEXT,
-    linked_players INTEGER[],
+CREATE SCHEMA IF NOT EXISTS ML;
+
+CREATE TABLE IF NOT EXISTS ML.results
+(
+    PlayerId     int,
+    Activity     TEXT,
+    ActivityType TEXT,
+    TIME         timestamptz,
+    PRIMARY KEY (PlayerId, Activity),
     FOREIGN KEY (PlayerId) REFERENCES players (id)
+);
+
+CREATE TABLE IF NOT EXISTS ML.results_large
+(
+    PlayerId     int,
+    Activity     TEXT,
+    ActivityType TEXT,
+    TIME         timestamptz,
+    PRIMARY KEY (PlayerId, Activity),
+    FOREIGN KEY (PlayerId) REFERENCES players (id)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS stats.bulk_minigames
+(
+    ID       INT PRIMARY KEY,
+    minigame TEXT,
+    links    INTEGER[],
+    FOREIGN KEY (ID) REFERENCES PLAYERS (ID)
+);
+
+
+
+CREATE SCHEMA IF NOT EXISTS GROUPED;
+
+CREATE TABLE IF NOT EXISTS grouped.skills
+(
+    ID           SERIAL PRIMARY KEY,
+    skills       TEXT[] UNIQUE,
+    skills_index INTEGER[] UNIQUE,
+    skills_csv   TEXT UNIQUE
+);
+
+
+
+CREATE TABLE IF NOT EXISTS grouped.skills_count
+(
+    ID     INT PRIMARY KEY,
+    Amount int,
+    FOREIGN KEY (id) references grouped.skills (id)
+);
+
+CREATE TABLE IF NOT EXISTS grouped.skills_users
+(
+    ID        INT PRIMARY KEY,
+    PlayerIds INTEGER[],
+    FOREIGN KEY (id) references grouped.skills (id)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS stats.minigame_links
+(
+    ID       INT PRIMARY KEY,
+    minigame TEXT,
+    links    INTEGER,
+    FOREIGN KEY (ID) REFERENCES PLAYERS (ID)
+);
+
+CREATE TABLE IF NOT EXISTS stats.minigame_links
+(
+    ID       INT PRIMARY KEY,
+    minigame TEXT,
+    links    INTEGER[],
+    FOREIGN KEY (ID) REFERENCES PLAYERS (ID)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS ML.results_large
+(
+    PlayerId     int,
+    Activity     TEXT,
+    ActivityType TEXT,
+    TIME         timestamptz,
+    PRIMARY KEY (PlayerId, Activity),
+    FOREIGN KEY (PlayerId) REFERENCES players (id)
+);
+
+
+CREATE TABLE IF NOT EXISTS ML.metrics_large
+(
+    Activity TEXT PRIMARY KEY,
+    metrics  JSONB,
+    TIME     timestamptz
+);
+
+
+CREATE SCHEMA IF NOT EXISTS GROUPED;
+
+CREATE TABLE IF NOT EXISTS grouped.skillers
+(
+    id        INTEGER PRIMARY KEY,
+    skills    TEXT[],
+    amount    int,
+    playerIds INTEGER[]
 );
