@@ -27,7 +27,7 @@ func (client *GainsClient) fetchPlayersRequireGains(limit int) (outdatedPlayers 
 		nf.playerid is null
 		AND PL.last_updated is not null
 		AND PG.last_updated is null
-		AND NOW() - pl.last_updated  > INTERVAL '1 day'
+		AND NOW() - pl.last_updated  > INTERVAL '3 day'
 	LIMIT $1;
 	`
 
