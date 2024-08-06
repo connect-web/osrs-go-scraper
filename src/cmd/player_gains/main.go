@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	threads                   = 125
-	insertPlayerSize          = 5_000
+	threads                   = 75
+	insertPlayerSize          = 10_000
 	insertNotFoundSize        = 5_000
 	queryFetchSize            = 100_000
 	maxNbConcurrentGoroutines = flag.Int("MaxRoutines", threads, "The number of goroutines that are allowed to run concurrently")
