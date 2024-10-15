@@ -1,22 +1,9 @@
-# Low Latency
+# High performance OSRS Hiscore scraper
 
-## What's the main focus of Low Latency?
-- Live OSRS Hiscores data for datasets in Machine Learning.
+## Purpose
+- This project is used for downloading player data from the Old-School Runescape hiscores and supports the [Low Latency website](https://low-latency.co.uk) by providing the backend with data.
 
-## What is low latency?
-- Go project that scrapes the Runescape Hiscores at high speeds.
-
-## Why do we need it?
-- There are multiple bot farms achieving hundreds of millions of experience in one skill.
-- Low latency is the backend for an API to easily find these accounts and ban the bots earlier.
-
-
-
-## What's the inspiration behind Low Latency?
-
-I have worked with the owners of Bot Detector, and they shared their dataset on the period of November 2023 to Jan 2024. 
-This dataset added more insightful features to my time series dataset on the same period which helped achieve high accuracy ML Models while also giving insights to the locations of bot behaviour.
-
+[Low Latency Source](https://github.com/connect-web/Low-Latency-API)
 
 
 
@@ -44,7 +31,7 @@ You can change the external port which is the first ```5432``` if you are alread
 - After creating your docker instance you must create the extensions & tables in the ```./sql``` folder in the respective files.
 - Coming soon: Docker file with setup for database
 
-## Environmental variables
+## Environment variables
 
 Then set your environmental variables for the Go scraper to connect with your docker database.
 
@@ -60,51 +47,76 @@ export lowLatencyDatabase="database"
 
 # Running
 
-### Username collector
+### Username finder
 
 **Navigate to directory:**
-src/nameFinder
+```src/cmd/name_finder```
 
 Add a file named `proxies.txt` in the directory.
 `proxies.txt` must be a file containing proxies with the following:
 ```ip:port:user:pass``` in each line, one line per proxy.
 
 ```shell
-go run name.go limitfinder.go
+go run namefinder.go
 ```
 
 or you can build it and run it in a new directory without any source files
 
 ```shell
-go build name.go limitfinder.go
+go build namefinder.go
 ```
 
-then you can simply run with
+then you can run with
 ```shell
-./name
+./namefinder
 ```
 
 ### Stats finder
 
 **Navigate to directory:**
-src/statFinder
+```src/cmd/player_live```
 
 Add a file named `proxies.txt` in the directory.
 `proxies.txt` must be a file containing proxies with the following:
 ```ip:port:user:pass``` in each line, one line per proxy.
 
 ```shell
-go run stats.go
+go run playerlive.go
 ```
 
 or you can build it and run it in a new directory without any source files
 
 ```shell
-go build stats.go
+go build playerlive.go
 ```
 
 then you can simply run with
 ```shell
-./name
+./playerlive
 ```
+
+### Gains finder
+
+**Navigate to directory:**
+```src/cmd/player_gains```
+
+Add a file named `proxies.txt` in the directory.
+`proxies.txt` must be a file containing proxies with the following:
+```ip:port:user:pass``` in each line, one line per proxy.
+
+```shell
+go run playergains.go
+```
+
+or you can build it and run it in a new directory without any source files
+
+```shell
+go build playergains.go
+```
+
+then you can simply run with
+```shell
+./playergains
+```
+
 
