@@ -24,10 +24,12 @@ func (client *GainsClient) fetchPlayersRequireGains(limit int) (outdatedPlayers 
 	LEFT JOIN player_live PL ON PL.playerid = players.id
 	LEFT JOIN player_gains pg ON pg.playerid = players.id
 	where
-		nf.playerid is null
-		AND PL.last_updated is not null
-		AND PG.last_updated is null
-		AND NOW() - pl.last_updated  > INTERVAL '3 day'
+		nf.playerid is null 
+	  AND PL.last_updated is not null
+	  AND NOW() - pl.last_updated  > INTERVAL '3 day'
+	  AND (
+	      PG.last_updated is null OR NOW() - PG.last_updated > INTERVAL '7 DAY'
+	  )
 	LIMIT $1;
 	`
 
