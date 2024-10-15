@@ -1,17 +1,12 @@
 package nameutils
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/net/html"
-	"golang.org/x/text/encoding/charmap"
-	"golang.org/x/text/transform"
 	"io"
 	"os"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 type HtmlHiscore struct {
@@ -118,7 +113,7 @@ func (df *HtmlHiscore) GetUsernamesFromHtmlString(htmlPage string) map[string]bo
 				minigameRank = strings.ReplaceAll(minigameRank, "\n", "")
 				minigameRank = strings.ReplaceAll(minigameRank, ",", "")
 
-				username = SanitizeString(username)
+				username = FilterName(username)
 				// debug print
 				//fmt.Printf("[Page %d] %s %s\n", df.page, username, minigameRank)
 				Users[username] = true
@@ -127,61 +122,6 @@ func (df *HtmlHiscore) GetUsernamesFromHtmlString(htmlPage string) map[string]bo
 	})
 
 	return Users
-}
-
-// SanitizeString replaces HTML entities and invalid UTF-8 sequences
-func SanitizeString(input string) string {
-	// Decode HTML entities
-	decoded := decodeHTMLEntities(input)
-
-	// Replace non-breaking space with a regular space
-	decoded = strings.ReplaceAll(decoded, "\u00A0", " ")
-
-	// Remove invalid UTF-8 characters
-	sanitized := removeInvalidUTF8(decoded)
-
-	return sanitized
-}
-
-// decodeHTMLEntities decodes HTML entities in a string
-func decodeHTMLEntities(s string) string {
-	// Create a reader for the HTML-encoded string
-	r := strings.NewReader(s)
-
-	// Parse the HTML and extract text
-	var buf bytes.Buffer
-	z := html.NewTokenizer(r)
-	for {
-		tt := z.Next()
-		switch tt {
-		case html.ErrorToken:
-			return buf.String()
-		case html.TextToken:
-			buf.Write(z.Text())
-		}
-	}
-}
-
-// removeInvalidUTF8 removes invalid UTF-8 characters from a string
-func removeInvalidUTF8(s string) string {
-	// Use the charmap package to replace invalid UTF-8 characters
-	encoder := charmap.ISO8859_1.NewDecoder()
-	result, _, _ := transform.String(encoder, s)
-
-	// Validate UTF-8 again, remove invalid sequences if any
-	var validUTF8 bytes.Buffer
-	for i, r := range result {
-		if r == utf8.RuneError {
-			_, size := utf8.DecodeRuneInString(result[i:])
-			if size == 1 {
-				// Skip invalid byte
-				continue
-			}
-		}
-		validUTF8.WriteRune(r)
-	}
-
-	return validUTF8.String()
 }
 
 // debugging html:
