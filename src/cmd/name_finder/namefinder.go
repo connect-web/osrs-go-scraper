@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	threads                   = 75
+	threads                   = 10
 	usernameBatchSize         = 5_000
 	LowMemory                 = false
 	maxNbConcurrentGoroutines = flag.Int("MaxRoutines", threads, "The number of goroutines that are allowed to run concurrently")

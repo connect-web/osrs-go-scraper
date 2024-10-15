@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	threads                   = 75
+	threads                   = 10
 	queryFetchSize            = 100_000
 	insertSizePlayers         = 10_000
 	insertSizeNotFound        = 10_000
