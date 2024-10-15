@@ -3,8 +3,6 @@
 ## Purpose
 - This project is used for downloading player data from the Old-School Runescape hiscores and supports the [Low Latency website](https://low-latency.co.uk) by providing the backend with data.
 
-[Low Latency Source](https://github.com/connect-web/Low-Latency-API)
-
 
 
 # Setup
