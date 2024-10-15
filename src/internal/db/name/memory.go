@@ -2,7 +2,6 @@ package name
 
 import (
 	"fmt"
-	"github.com/connect-web/Low-Latency/internal/utility/nameutils"
 )
 
 var knownUsernames = map[string]struct{}{}
@@ -36,6 +35,6 @@ func getValidUsernamesFromMemory(usernames map[string]struct{}) map[string]struc
 }
 
 func IsUsernameKnown(username string) bool {
-	_, exists := knownUsernames[nameutils.FilterName(username)]
+	_, exists := knownUsernames[username]
 	return exists
 }
